@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Bar } from "react-chartjs-2";
+import { FiltroEmocao } from "../FiltroEmocao";
 
 const getEmotionColor = (emotion) => {
     const name = String(emotion || "").toLowerCase();
@@ -29,13 +31,24 @@ const traduzirEmocao = (emotion) => {
 };
 
 export const EmotionBarChart = ({ data = [] }) => {
+    const [periodoSelecionado, setPeriodoSelecionado] = useState("Todas");
+    const periodosDisponiveis = ["Hoje", "Últimos 7 dias", "Este Mês"];
+
+    // Garante que listaBase sempre seja um array seguro
+    const listaBase = Array.isArray(data) ? data : [];
+
+    // Proteção adicionada para nunca ser undefined
+    const dadosFiltrados = periodoSelecionado === "Todas"
+        ? listaBase
+        : listaBase.filter((d) => d && d.periodo === periodoSelecionado);
+
     const chartData = {
-        labels: data.map((d) => traduzirEmocao(d.name)),
+        labels: dadosFiltrados.map((d) => traduzirEmocao(d?.name)),
         datasets: [
             {
                 label: "Quantidade",
-                data: data.map((d) => d.value || 0),
-                backgroundColor: data.map((d) => getEmotionColor(d.name)),
+                data: dadosFiltrados.map((d) => d?.value || 0),
+                backgroundColor: dadosFiltrados.map((d) => getEmotionColor(d?.name)),
             },
         ],
     };
@@ -79,6 +92,14 @@ export const EmotionBarChart = ({ data = [] }) => {
     return (
         <div className="p-4 bg-gray-800 rounded-lg shadow w-full">
             <Bar data={chartData} options={options} />
+
+            <div className="mt-6 border-t border-gray-700 pt-4">
+                <FiltroEmocao
+                    filtroFonte={periodoSelecionado}
+                    aoAplicarFiltro={setPeriodoSelecionado}
+                    fontesDisponiveis={periodosDisponiveis}
+                />
+            </div>
         </div>
     );
 };
